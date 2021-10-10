@@ -10,19 +10,35 @@ import {
     AccordionDetails,
     AccordionSummary,
     TextField,
-    MenuItem,
-    Select, Button
+    Button,
+    TableContainer,
+    Table,
+    TableHead,
+    TableBody,
+    TableRow,
+    TableCell,
+    Container,
+    CircularProgress,
+    Backdrop
 } from "@mui/material";
 import axios from "axios";
 import AlertPopup from "../AlertPopup";
 import {ListItem} from "@material-ui/core";
-import {ClearOutlined, DeleteOutlined, EditOutlined, ExpandLessOutlined,} from "@material-ui/icons";
+import {
+    ClearAllOutlined,
+    ClearOutlined,
+    ClearSharp,
+    DeleteOutlined,
+    EditOutlined,
+    ExpandLessOutlined,
+} from "@material-ui/icons";
 import styles from './AdminPanel.module.css';
 
 const AdminPanel = () => {
     const [cities, setCities] = useState([]);
     const [users, setUsers] = useState([]);
     const [newUser,setNewUser] = useState({});
+    const [logs, setLogs] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [alertVision, setAlertVision] = useState(false);
@@ -35,13 +51,48 @@ const AdminPanel = () => {
         setAlertVision(vision);
     }
 
+    const clearUsedTable = async (title) => {
+        if(!window.confirm("Вы действительно ходитет очистить таблицу?")){
+            return false;
+        }
+        return await axios.get(`http://thelax67.beget.tech/options.php?option=table_clearUsed&table=${title}`)
+            .then(response=>{
+                setAlert('success', 'Таблицы очищена')
+            })
+            .catch(error=>{
+                setAlert('error', 'Произошла ошибка');
+            })
+    }
+    const clearTable = async (title) =>{
+        if(!window.confirm("Вы действительно ходитет очистить таблицу?")){
+            return false;
+        }
+        return await axios.get(`http://thelax67.beget.tech/options.php?option=table_clear&table=${title}`)
+            .then(response=>{
+                setAlert('success', 'Таблицы очищена')
+            })
+            .catch(error=>{
+                setAlert('error', 'Произошла ошибка');
+            })
+    }
+    const removeTable = async (title) =>{
+        if(!window.confirm("Вы действительно ходитет удалить таблицу?")){
+            return false;
+        }
+        return await axios.get(`http://thelax67.beget.tech/options.php?option=table_remove&table=${title}`)
+            .then(response=>{
+                setAlert('success', 'Таблицы удалена')
+            })
+            .catch(error=>{
+                setAlert('error', 'Произошла ошибка');
+            })
+    }
+
     const getCities = async () => {
         setCities([]);
         return await axios.get(`http://thelax67.beget.tech/options.php?option=cities`)
             .then(response => {
-                response.data.map(el => {
-                    setCities(prevArray => [...prevArray, el])
-                })
+                setCities(response.data);
             })
             .catch(error => {
                 setAlert('error', error.message, true);
@@ -52,9 +103,7 @@ const AdminPanel = () => {
         setUsers([]);
         return await axios.get(`http://thelax67.beget.tech/options.php?option=users`)
             .then(response => {
-                response.data.map(el => {
-                    setUsers((prevState => [...prevState, el]))
-                })
+                setUsers(response.data);
             })
             .catch(error => {
                 setAlert('error', error.message)
@@ -62,7 +111,7 @@ const AdminPanel = () => {
     }
     const updateStateUsers = (index, field, e) => {
         const newArray = [...users];
-        newArray[index] = {...newArray[index], field: e.target.value}
+        newArray[index] = {...newArray[index], [field]: e.target.value}
         setUsers(newArray);
     }
     const updateAccessCities = (city, indexUser,value) => {
@@ -115,6 +164,7 @@ const AdminPanel = () => {
     const saveUser = async (index) => {
         const user = users[index];
         const body = {
+            id: user.id,
             email: user.email,
             password: user.password,
             privileges: user.privileges,
@@ -125,22 +175,36 @@ const AdminPanel = () => {
             body: body,
         })
             .then(response=>{
-                setAlert('success', 'Пользователь добавлен')
+                setAlert('success', 'Пользователь сохранен')
             })
             .catch(error=>{
                 setAlert('error', 'Произошла ошибка');
             })
     }
 
+    const getLogs = async () =>{
+        return await axios.get(`http://thelax67.beget.tech/options.php?option=logs`)
+            .then(response=>{
+                setLogs(response.data);
+            })
+    }
+
+    const callAPI = async () =>{
+        await getCities();
+        await getUsers();
+        await getLogs();
+        await getCities();
+    }
+
     useEffect(() => {
-        getCities();
-        getUsers()
+        callAPI()
+            .then(response=>setLoading(false));
     }, []);
 
 
     return (
         <Box>
-            <Box>
+            <Box >
                 <Typography variant={"h5"} sx={{color: '#1976D2', marginBottom: 5}}>Админ панель</Typography>
             </Box>
             <Box sx={{marginBottom: 2}}>
@@ -162,12 +226,17 @@ const AdminPanel = () => {
                                     </Typography>
                                 </AccordionDetails>
                             </Accordion>
-                            <Tooltip title={'Очистить'}>
-                                <IconButton>
+                            <Tooltip title={'Очистить выгруженные'}>
+                                <IconButton onClick={()=>clearUsedTable(el.title)}>
                                     <ClearOutlined/>
                                 </IconButton>
                             </Tooltip>
-                            <Tooltip title={'Удалить'}>
+                            <Tooltip title={'Очистить всю базу'}>
+                                <IconButton onClick={()=>clearTable(el.title)}>
+                                    <ClearAllOutlined/>
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title={'Удалить'} onClick={()=>removeTable(el.title)}>
                                 <IconButton>
                                     <DeleteOutlined/>
                                 </IconButton>
@@ -176,9 +245,9 @@ const AdminPanel = () => {
                     ))}
                 </Stack> : <Box>Баз данных нет</Box>}
             </Box>
-            <Box>
+            <Box sx={{marginBottom: 2}}>
                 <Typography variant={"h6"} sx={{color: '#1976D2', marginBottom: 2}}>Пользователи</Typography>
-                <Stack>
+                <Stack spacing={2}>
                     {users.length !== 0 ?
                         users.map((el, indexUser) => (
                             <ListItem>
@@ -194,7 +263,7 @@ const AdminPanel = () => {
                                                    onChange={e => updateStateUsers(indexUser, 'password', e)}/>
                                         {cities.length !== 0 ?
                                             cities.map((el,indexCity) => (
-                                                <TextField key={indexCity} margin="dense" label={el.title} value={searchValueCities(indexUser, el.title)} onChange={e=>updateAccessCities(el.title, indexUser, e.target.value)}/>
+                                                <TextField key={indexCity} margin="dense" label={el.title.split('_').join(' ').split(/\s+/).map(word => word[0].toUpperCase() + word.substring(1)).join(' ')} value={searchValueCities(indexUser, el.title)} onChange={e=>updateAccessCities(el.title, indexUser, e.target.value)}/>
                                             ))
                                             : <Typography>Базы отсутствуют</Typography>}
                                         <Button sx={{marginTop: 2}} variant={'outlined'} onClick={()=>saveUser(indexUser)}>Сохранить</Button>
@@ -222,7 +291,47 @@ const AdminPanel = () => {
                     </ListItem>
                 </Stack>
             </Box>
+            <Box sx={{marginBottom: 2}}>
+                <Typography variant={"h6"} sx={{color: '#1976D2', marginBottom: 2}}>Поиск дубликатов</Typography>
+
+            </Box>
+            <Box>
+                <Typography variant={"h6"} sx={{color: '#1976D2', marginBottom: 2}}>Логи (последние 25)</Typography>
+                {logs.length!==0 ?
+                    <TableContainer component={Paper}>
+                        <Table sx={{ minWidth: 400 }} aria-label="simple table">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Email</TableCell>
+                                    <TableCell align="right">Количество номеров</TableCell>
+                                    <TableCell align="right">Город</TableCell>
+                                    <TableCell align="right">Дата выгрузки</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {logs.map((log) => (
+                                    <TableRow
+                                        key={log.id}
+                                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                                    >
+                                        <TableCell component="th" scope="row">
+                                            {log.email}
+                                        </TableCell>
+                                        <TableCell align="right">{log.count}</TableCell>
+                                        <TableCell align="right">{log.tableOut.split('_').join(' ').split(/\s+/).map(word => word[0].toUpperCase() + word.substring(1)).join(' ')}</TableCell>
+                                        <TableCell align="right">{log.dateDump.split('-').reverse().join(' ')}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                :   <Typography>Логи отсутствуют</Typography>
+                }
+            </Box>
             <AlertPopup vision={alertVision} setVision={setAlertVision} type={alertType} message={alertMessage}/>
+            <Backdrop open={loading} sx={{color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1}}>
+                <CircularProgress color={"inherit"}/>
+            </Backdrop>
         </Box>
     );
 };

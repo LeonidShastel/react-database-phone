@@ -1,10 +1,11 @@
 import React, {useState} from 'react';
 import Box from '@mui/material/Box';
-import {Tabs, Tab, Typography} from "@mui/material";
+import {Tabs, Tab, Typography, Button} from "@mui/material";
 import UploadingToDB from "../UploadingToDB";
 import GetDump from "../GetDump";
 import Options from "../Options/Options";
 import AdminPanel from "../AdminPanel/AdminPanel";
+import {useCookies} from "react-cookie";
 
 function TabPanel(props) {
     const { children, value, index, ...other } = props;
@@ -36,9 +37,16 @@ function a11yProps(index) {
 const Menu = ({privileges}) => {
 
     const [tabNumber, setTabNumber] = useState(0);
+    const [,,removeCookie] = useCookies();
 
     const changeTab = (e, value) =>{
         setTabNumber(value);
+    }
+
+    const goOut = () =>{
+        removeCookie('email');
+        removeCookie('password');
+        window.location.reload();
     }
 
     return (
@@ -47,21 +55,21 @@ const Menu = ({privileges}) => {
                 <Tabs value={tabNumber} onChange={changeTab} aria-label="basic tabs example">
                     <Tab label="Загрузка в БД" {...a11yProps(0)} />
                     <Tab label="Выгрузка из БД" {...a11yProps(1)} />
-                    <Tab label="Настройка БД" {...a11yProps(2)} />
-                    {privileges==='admin'?<Tab label={"Админ панель"} {...a11yProps(3)}/> : null}
+                    {privileges==='admin'?<Tab label={"Админ панель"} {...a11yProps(2)}/> : null}
+                    <Tab label="Выйти" onClick={goOut} {...a11yProps(3)}/>
                 </Tabs>
             </Box>
             <TabPanel value={tabNumber} index={0}>
                 <UploadingToDB/>
             </TabPanel>
             <TabPanel value={tabNumber} index={1}>
-                <GetDump/>
+                <GetDump privileges={privileges}/>
             </TabPanel>
             <TabPanel value={tabNumber} index={2}>
-                <Options/>
+                <AdminPanel/>
             </TabPanel>
             <TabPanel value={tabNumber} index={3}>
-                <AdminPanel/>
+                {null}
             </TabPanel>
         </Box>
     );

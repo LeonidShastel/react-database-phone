@@ -1,7 +1,6 @@
 import React, {useState} from 'react';
 import styles from './Login.module.css';
 import {Button, TextField, Snackbar, Alert, Box} from "@mui/material";
-import { useHistory } from "react-router-dom";
 import {useCookies} from "react-cookie";
 import axios from "axios";
 
