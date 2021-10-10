@@ -129,7 +129,7 @@ else if ($option === 'save_user') {
     }
 }
 else if ($option === 'logs') {
-    if ($result = $mysqli->query("SELECT * FROM `Logs` LIMIT 25")) {
+    if ($result = $mysqli->query("SELECT * FROM `Logs` ORDER BY ID DESC LIMIT 25")) {
         $json = array();
         while ($row = $result->fetch_object()) {
             $object = [

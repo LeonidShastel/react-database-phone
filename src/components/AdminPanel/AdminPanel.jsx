@@ -17,9 +17,9 @@ import {
     TableBody,
     TableRow,
     TableCell,
-    Container,
+    Select,
     CircularProgress,
-    Backdrop
+    Backdrop, MenuItem
 } from "@mui/material";
 import axios from "axios";
 import AlertPopup from "../AlertPopup";
@@ -37,7 +37,7 @@ import styles from './AdminPanel.module.css';
 const AdminPanel = () => {
     const [cities, setCities] = useState([]);
     const [users, setUsers] = useState([]);
-    const [newUser,setNewUser] = useState({});
+    const [newUser,setNewUser] = useState({privileges: 'user'});
     const [logs, setLogs] = useState([]);
 
     const [loading, setLoading] = useState(true);
@@ -55,6 +55,7 @@ const AdminPanel = () => {
         if(!window.confirm("Вы действительно ходитет очистить таблицу?")){
             return false;
         }
+        setLoading(true);
         return await axios.get(`http://thelax67.beget.tech/options.php?option=table_clearUsed&table=${title}`)
             .then(response=>{
                 setAlert('success', 'Таблицы очищена')
@@ -62,11 +63,13 @@ const AdminPanel = () => {
             .catch(error=>{
                 setAlert('error', 'Произошла ошибка');
             })
+            .finally(()=>setLoading(false))
     }
     const clearTable = async (title) =>{
         if(!window.confirm("Вы действительно ходитет очистить таблицу?")){
             return false;
         }
+        setLoading(true)
         return await axios.get(`http://thelax67.beget.tech/options.php?option=table_clear&table=${title}`)
             .then(response=>{
                 setAlert('success', 'Таблицы очищена')
@@ -74,11 +77,13 @@ const AdminPanel = () => {
             .catch(error=>{
                 setAlert('error', 'Произошла ошибка');
             })
+            .finally(()=>setLoading(false));
     }
     const removeTable = async (title) =>{
         if(!window.confirm("Вы действительно ходитет удалить таблицу?")){
             return false;
         }
+        setLoading(true);
         return await axios.get(`http://thelax67.beget.tech/options.php?option=table_remove&table=${title}`)
             .then(response=>{
                 setAlert('success', 'Таблицы удалена')
@@ -86,6 +91,7 @@ const AdminPanel = () => {
             .catch(error=>{
                 setAlert('error', 'Произошла ошибка');
             })
+            .finally(()=>setLoading(false))
     }
 
     const getCities = async () => {
@@ -144,6 +150,7 @@ const AdminPanel = () => {
         return 0;
     }
     const deleteUser = async (email)=>{
+        setLoading(true)
         return await axios.get(`http://thelax67.beget.tech/options.php?option=delete_user&email=${email}`)
             .then(response=>{
                 setAlert('success', 'Пользователь удален')
@@ -151,8 +158,10 @@ const AdminPanel = () => {
             .catch(error=>{
                 setAlert('error', 'Произошла ошибка');
             })
+            .finally(()=>setLoading(false))
     }
     const addUser = async ()=>{
+        setLoading(true);
         return await axios.get(`http://thelax67.beget.tech/options.php?option=add_user&email=${newUser.email}&password=${newUser.password}&privileges=${newUser.privileges}`)
             .then(response=>{
                 setAlert('success', 'Пользователь добавлен')
@@ -160,8 +169,10 @@ const AdminPanel = () => {
             .catch(error=>{
                 setAlert('error', 'Произошла ошибка');
             })
+            .finally(()=>setLoading(false));
     }
     const saveUser = async (index) => {
+        setLoading(true);
         const user = users[index];
         const body = {
             id: user.id,
@@ -180,6 +191,7 @@ const AdminPanel = () => {
             .catch(error=>{
                 setAlert('error', 'Произошла ошибка');
             })
+            .finally(()=>setLoading(false))
     }
 
     const getLogs = async () =>{
@@ -200,6 +212,15 @@ const AdminPanel = () => {
         callAPI()
             .then(response=>setLoading(false));
     }, []);
+
+    const generateDate = (date)  => {
+        if(date.length>0){
+            const newDate = date.split(' ');
+            newDate[0] = newDate[0].split('-').reverse().join(' ');
+            return  (newDate.join(' '));
+        }
+
+    }
 
 
     return (
@@ -283,17 +304,15 @@ const AdminPanel = () => {
                                            onChange={e => setNewUser({...newUser, email:e.target.value})}/>
                                 <TextField margin="dense" label='Пароль' value={newUser.password}
                                            onChange={e => setNewUser({...newUser, password:e.target.value})}/>
-                                <TextField margin="dense" label='Доступ (admin/user)' value={newUser.privileges}
-                                           onChange={e => setNewUser({...newUser, privileges:e.target.value})}/>
+                                <Select value={newUser.privileges} onChange={e => setNewUser({...newUser, privileges:e.target.value})} margin={"dense"}>
+                                    <MenuItem value={'user'}>Пользователь</MenuItem>
+                                    <MenuItem value={'admin'}>Администратор</MenuItem>
+                                </Select>
                                 <Button sx={{marginTop: 2}} variant={'outlined'} onClick={addUser}>Сохранить</Button>
                             </AccordionDetails>
                         </Accordion>
                     </ListItem>
                 </Stack>
-            </Box>
-            <Box sx={{marginBottom: 2}}>
-                <Typography variant={"h6"} sx={{color: '#1976D2', marginBottom: 2}}>Поиск дубликатов</Typography>
-
             </Box>
             <Box>
                 <Typography variant={"h6"} sx={{color: '#1976D2', marginBottom: 2}}>Логи (последние 25)</Typography>
@@ -319,7 +338,7 @@ const AdminPanel = () => {
                                         </TableCell>
                                         <TableCell align="right">{log.count}</TableCell>
                                         <TableCell align="right">{log.tableOut.split('_').join(' ').split(/\s+/).map(word => word[0].toUpperCase() + word.substring(1)).join(' ')}</TableCell>
-                                        <TableCell align="right">{log.dateDump.split('-').reverse().join(' ')}</TableCell>
+                                        <TableCell align="right">{generateDate(log.dateDump)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

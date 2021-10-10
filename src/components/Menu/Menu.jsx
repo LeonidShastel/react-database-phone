@@ -53,7 +53,7 @@ const Menu = ({privileges}) => {
         <Box sx={{width: '100%'}}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={tabNumber} onChange={changeTab} aria-label="basic tabs example">
-                    <Tab label="Загрузка в БД" {...a11yProps(0)} />
+                    {privileges==='admin'?<Tab label={"Загрузка в БД"} {...a11yProps(0)}/> : null}
                     <Tab label="Выгрузка из БД" {...a11yProps(1)} />
                     {privileges==='admin'?<Tab label={"Админ панель"} {...a11yProps(2)}/> : null}
                     <Tab label="Выйти" onClick={goOut} {...a11yProps(3)}/>

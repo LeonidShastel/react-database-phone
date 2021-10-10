@@ -81,9 +81,8 @@ const UploadingToDB = () => {
         return await axios.post('http://thelax67.beget.tech/addToDataBase.php', request)
             .then(response => {
                 setAlertType('success');
-                setAlertMessage("База данных обновлена");
+                setAlertMessage(`База данных обновлена. Дубликатов найдено: ${response.data}`);
                 setAlertVision(true);
-                console.log(response.data);
             })
             .catch(error => {
                 setAlertType("error");
@@ -113,11 +112,11 @@ const UploadingToDB = () => {
                 </FormControl>
                 <Box sx={{marginTop: 5, display: 'flex', flexDirection: 'column'}}>
                     <FormLabel component="legend">Для создания новой таблицы введите данные</FormLabel>
-                    <Box>
+                    <Box style={{marginTop: 5}}>
                         <TextField size={"small"} value={country} onChange={e => {setSelectedBase(null); setCountry(e.target.value)}}
-                                   sx={{marginRight: 2}} placeholder={"Страна"} required={true}/>
+                                   sx={{marginRight: 2}} label={"Страна"} required={true}/>
                         <TextField size={"small"} value={city} onChange={e => {setSelectedBase(null); setCity(e.target.value)}}
-                                   sx={{marginRight: 10}} placeholder={"Город"} required={true}/>
+                                   sx={{marginRight: 10}} label={"Город"} required={true}/>
                     </Box>
                 </Box>
             </Box>
